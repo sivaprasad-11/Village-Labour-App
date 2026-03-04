@@ -1,0 +1,5 @@
+farmer.in {
+
+reverse_proxy localhost:80
+
+}
