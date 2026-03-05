@@ -1,5 +1,6 @@
-// Same domain API (works locally + on AWS behind reverse proxy)
-const API = "";
+// When frontend runs inside Docker, "localhost" points to the container itself.
+// This hostname points to your Windows host machine where backend is exposed on 3000.
+const API = "http://host.docker.internal:3000";
 
 export async function getBatches() {
   const res = await fetch(`${API}/api/batches`);
