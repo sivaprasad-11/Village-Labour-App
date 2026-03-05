@@ -1,7 +1,11 @@
 import express from "express";
 import cors from "cors";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, ScanCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
+import {
+  DynamoDBDocumentClient,
+  ScanCommand,
+  PutCommand
+} from "@aws-sdk/lib-dynamodb";
 
 const app = express();
 app.use(cors());
@@ -24,7 +28,9 @@ app.get("/api/health", (req, res) => {
 // Get batches
 app.get("/api/batches", async (req, res) => {
   try {
-    const out = await docClient.send(new ScanCommand({ TableName: BATCHES_TABLE }));
+    const out = await docClient.send(
+      new ScanCommand({ TableName: BATCHES_TABLE })
+    );
     res.json(out.Items || []);
   } catch (err) {
     console.error("batches error:", err);
@@ -32,43 +38,52 @@ app.get("/api/batches", async (req, res) => {
   }
 });
 
-// Book labour (with new fields)
+// Book labour (with new fields) - uses pk as Partition Key
 app.post("/api/book", async (req, res) => {
   try {
-    const {
-      farmerName,
-      date,
-      batchId,
-      village,
-      workType,
-      address,
-      phone
-    } = req.body;
+    const { farmerName, date, batchId, village, workType, address, phone } =
+      req.body;
 
     if (!farmerName || !date || !batchId) {
-      return res.status(400).json({ error: "farmerName, date, batchId are required" });
+      return res
+        .status(400)
+        .json({ error: "farmerName, date, batchId are required" });
     }
 
+    // ✅ DynamoDB Partition Key required by your table
+    const pk = `${batchId}#${date}`;
+
     const booking = {
-      bookingId: Date.now().toString(),
-      farmerName,
-      date,
+      pk,
       batchId,
+      date,
+      farmerName,
       village: village || "",
       workType: workType || "",
       address: address || "",
-      phone: phone || ""
+      phone: phone || "",
+      status: "BOOKED",
+      createdAt: new Date().toISOString()
     };
 
     await docClient.send(
       new PutCommand({
         TableName: BOOKINGS_TABLE,
-        Item: booking
+        Item: booking,
+        // ✅ prevents overwrite/double booking
+        ConditionExpression: "attribute_not_exists(pk)"
       })
     );
 
     res.json({ message: "Booking saved", booking });
   } catch (err) {
+    // Already booked for same batch+date
+    if (err?.name === "ConditionalCheckFailedException") {
+      return res
+        .status(409)
+        .json({ error: "Already booked for this batch and date" });
+    }
+
     console.error("book error:", err);
     res.status(500).json({ error: "Booking failed" });
   }
