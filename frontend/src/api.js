@@ -1,6 +1,4 @@
-// When frontend runs inside Docker, "localhost" points to the container itself.
-// This hostname points to your Windows host machine where backend is exposed on 3000.
-const API = "http://host.docker.internal:3000";
+const API = "";
 
 export async function getBatches() {
   const res = await fetch(`${API}/api/batches`);
@@ -13,5 +11,18 @@ export async function bookBatch(data) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data)
   });
-  return res.json();
+
+  // read json safely even if error
+  let json = {};
+  try {
+    json = await res.json();
+  } catch (e) {
+    json = {};
+  }
+
+  if (!res.ok) {
+    return { error: json.error || "Booking failed" };
+  }
+
+  return json;
 }

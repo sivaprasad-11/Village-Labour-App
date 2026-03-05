@@ -16,7 +16,7 @@ function App() {
   }, []);
 
   const submit = async () => {
-    await bookBatch({
+    const res = await bookBatch({
       farmerName,
       date,
       batchId,
@@ -26,11 +26,25 @@ function App() {
       phone
     });
 
+    if (res?.error) {
+      alert(res.error);   // Shows error like "Already booked..."
+      return;
+    }
+
     alert("Booking done");
+
+    // optional reset form
+    setFarmerName("");
+    setDate("");
+    setBatchId("");
+    setVillage("");
+    setWorkType("");
+    setAddress("");
+    setPhone("");
   };
 
   return (
-    <div>
+    <div style={{ padding: "20px", fontFamily: "Arial" }}>
       <h1>Village Labour Booking App</h1>
 
       <h2>Farmer Booking</h2>
@@ -83,8 +97,8 @@ function App() {
 
       <br/><br/>
 
-      <select onChange={(e) => setBatchId(e.target.value)}>
-        <option>Select Batch</option>
+      <select value={batchId} onChange={(e) => setBatchId(e.target.value)}>
+        <option value="">Select Batch</option>
 
         {batches.map((b) => (
           <option key={b.batchId} value={b.batchId}>
