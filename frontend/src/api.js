@@ -1,4 +1,5 @@
-const API = "";
+// LOCAL docker: frontend container -> talk to backend running on Windows host
+const API = "http://host.docker.internal:3000";
 
 export async function getBatches() {
   const res = await fetch(`${API}/api/batches`);
@@ -12,17 +13,9 @@ export async function bookBatch(data) {
     body: JSON.stringify(data)
   });
 
-  // read json safely even if error
   let json = {};
-  try {
-    json = await res.json();
-  } catch (e) {
-    json = {};
-  }
+  try { json = await res.json(); } catch {}
 
-  if (!res.ok) {
-    return { error: json.error || "Booking failed" };
-  }
-
+  if (!res.ok) return { error: json.error || "Booking failed" };
   return json;
 }
