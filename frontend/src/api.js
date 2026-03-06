@@ -1,4 +1,4 @@
-const API = "http://farmhelper.in:3000";
+const API = "";
 
 export async function getBatches() {
   const res = await fetch(`${API}/api/batches`);
