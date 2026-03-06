@@ -11,21 +11,17 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Env
 const AWS_REGION = process.env.AWS_REGION || "ap-south-1";
 const BATCHES_TABLE = process.env.TABLE_BATCHES || "LabourBatches";
 const BOOKINGS_TABLE = process.env.TABLE_BOOKINGS || "Bookings";
 
-// DynamoDB client
 const ddb = new DynamoDBClient({ region: AWS_REGION });
 const docClient = DynamoDBDocumentClient.from(ddb);
 
-// Health
 app.get("/api/health", (req, res) => {
   res.json({ status: "OK" });
 });
 
-// Get batches
 app.get("/api/batches", async (req, res) => {
   try {
     const out = await docClient.send(
@@ -38,7 +34,33 @@ app.get("/api/batches", async (req, res) => {
   }
 });
 
-// Book labour (with new fields) - uses pk as Partition Key
+app.get("/api/bookings", async (req, res) => {
+  try {
+    const { batchId, date } = req.query;
+
+    const out = await docClient.send(
+      new ScanCommand({ TableName: BOOKINGS_TABLE })
+    );
+
+    let items = out.Items || [];
+
+    if (batchId) {
+      items = items.filter((item) => item.batchId === batchId);
+    }
+
+    if (date) {
+      items = items.filter((item) => item.date === date);
+    }
+
+    items.sort((a, b) => (a.date || "").localeCompare(b.date || ""));
+
+    res.json(items);
+  } catch (err) {
+    console.error("bookings error:", err);
+    res.status(500).json({ error: "Failed to fetch bookings" });
+  }
+});
+
 app.post("/api/book", async (req, res) => {
   try {
     const { farmerName, date, batchId, village, workType, address, phone } =
@@ -50,7 +72,6 @@ app.post("/api/book", async (req, res) => {
         .json({ error: "farmerName, date, batchId are required" });
     }
 
-    // ✅ DynamoDB Partition Key required by your table
     const pk = `${batchId}#${date}`;
 
     const booking = {
@@ -70,14 +91,12 @@ app.post("/api/book", async (req, res) => {
       new PutCommand({
         TableName: BOOKINGS_TABLE,
         Item: booking,
-        // ✅ prevents overwrite/double booking
         ConditionExpression: "attribute_not_exists(pk)"
       })
     );
 
     res.json({ message: "Booking saved", booking });
   } catch (err) {
-    // Already booked for same batch+date
     if (err?.name === "ConditionalCheckFailedException") {
       return res
         .status(409)

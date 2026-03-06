@@ -1,7 +1,17 @@
-const API = "http://13.126.222.51:3000";
+const API = "http://farmhelper.in:3000";
 
 export async function getBatches() {
   const res = await fetch(`${API}/api/batches`);
+  return res.json();
+}
+
+export async function getBookings(batchId, date) {
+  const params = new URLSearchParams();
+
+  if (batchId) params.append("batchId", batchId);
+  if (date) params.append("date", date);
+
+  const res = await fetch(`${API}/api/bookings?${params.toString()}`);
   return res.json();
 }
 
