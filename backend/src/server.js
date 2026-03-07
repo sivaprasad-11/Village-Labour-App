@@ -81,7 +81,7 @@ app.post("/api/book", async (req, res) => {
         .json({ error: "farmerName, date, batchId are required" });
     }
 
-    onst bookingId = `BOOKING#${Date.now()}`;
+    const bookingId = `BOOKING#${Date.now()}`;
 
     const booking = {
       pk: bookingId,
