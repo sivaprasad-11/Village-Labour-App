@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { getBatches, getBookings, bookBatch } from "./api";
- 
+
 function App() {
   const [activeTab, setActiveTab] = useState("farmer");
   const [batches, setBatches] = useState([]);
- 
+
   const [farmerName, setFarmerName] = useState("");
   const [date, setDate] = useState("");
   const [batchId, setBatchId] = useState("");
@@ -12,27 +12,38 @@ function App() {
   const [workType, setWorkType] = useState("");
   const [address, setAddress] = useState("");
   const [phone, setPhone] = useState("");
+  const [labourCount, setLabourCount] = useState("");
+  const [mapLink, setMapLink] = useState("");
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("");
- 
+
   const [leaderBatchId, setLeaderBatchId] = useState("");
   const [leaderDate, setLeaderDate] = useState("");
   const [leaderBookings, setLeaderBookings] = useState([]);
- 
+
   useEffect(() => {
     getBatches().then(setBatches);
   }, []);
- 
+
   const submit = async () => {
     setMessage("");
     setMessageType("");
- 
-    if (!farmerName || !date || !batchId || !village || !workType || !address || !phone) {
-      setMessage("Please fill all fields");
+
+    if (
+      !farmerName ||
+      !date ||
+      !batchId ||
+      !village ||
+      !workType ||
+      !address ||
+      !phone ||
+      !labourCount
+    ) {
+      setMessage("Please fill all required fields");
       setMessageType("error");
       return;
     }
- 
+
     const res = await bookBatch({
       farmerName,
       date,
@@ -40,18 +51,20 @@ function App() {
       village,
       workType,
       address,
-      phone
+      phone,
+      labourCount,
+      mapLink
     });
- 
+
     if (res?.error) {
       setMessage(res.error);
       setMessageType("error");
       return;
     }
- 
+
     setMessage("Booking successful");
     setMessageType("success");
- 
+
     setFarmerName("");
     setDate("");
     setBatchId("");
@@ -59,19 +72,21 @@ function App() {
     setWorkType("");
     setAddress("");
     setPhone("");
+    setLabourCount("");
+    setMapLink("");
   };
- 
+
   const loadLeaderBookings = async () => {
     const data = await getBookings(leaderBatchId, leaderDate);
     setLeaderBookings(data);
   };
- 
+
   return (
     <div style={styles.page}>
       <div style={styles.container}>
         <h1 style={styles.title}>Farm Helper</h1>
         <p style={styles.subtitle}>Village Labour Booking App</p>
- 
+
         <div style={styles.tabRow}>
           <button
             style={activeTab === "farmer" ? styles.activeTab : styles.tab}
@@ -79,7 +94,7 @@ function App() {
           >
             Farmer Booking
           </button>
- 
+
           <button
             style={activeTab === "leader" ? styles.activeTab : styles.tab}
             onClick={() => setActiveTab("leader")}
@@ -87,17 +102,17 @@ function App() {
             Leader Dashboard
           </button>
         </div>
- 
+
         {activeTab === "farmer" && (
           <div style={styles.card}>
             <h2>Book Labour</h2>
- 
+
             {message && (
               <div style={messageType === "success" ? styles.success : styles.error}>
                 {message}
               </div>
             )}
- 
+
             <div style={styles.grid}>
               <input
                 style={styles.input}
@@ -105,47 +120,56 @@ function App() {
                 value={farmerName}
                 onChange={(e) => setFarmerName(e.target.value)}
               />
- 
+
               <input
                 style={styles.input}
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
               />
- 
+
               <input
                 style={styles.input}
                 placeholder="Village"
                 value={village}
                 onChange={(e) => setVillage(e.target.value)}
               />
- 
+
               <select
                 style={styles.input}
                 value={workType}
                 onChange={(e) => setWorkType(e.target.value)}
               >
                 <option value="">Select Work Type</option>
-                <option value="Tomatalu perakadam">Tomatalu perakadam</option>
+                <option value="Tomato perakadam">Tomato perakadam</option>
                 <option value="Chetlu thogadam">Chetlu thogadam</option>
                 <option value="Purri kattadam">Purri kattadam</option>
                 <option value="Other work">Other work</option>
               </select>
- 
+
               <input
                 style={styles.input}
                 placeholder="Address"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
               />
- 
+
               <input
                 style={styles.input}
                 placeholder="Phone Number"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
               />
- 
+
+              <input
+                style={styles.input}
+                type="number"
+                min="1"
+                placeholder="Number of labour required"
+                value={labourCount}
+                onChange={(e) => setLabourCount(e.target.value)}
+              />
+
               <select
                 style={styles.input}
                 value={batchId}
@@ -158,18 +182,25 @@ function App() {
                   </option>
                 ))}
               </select>
+
+              <input
+                style={{ ...styles.input, gridColumn: "1 / -1" }}
+                placeholder="Google Map Link (optional)"
+                value={mapLink}
+                onChange={(e) => setMapLink(e.target.value)}
+              />
             </div>
- 
+
             <button style={styles.button} onClick={submit}>
               Book Labour
             </button>
           </div>
         )}
- 
+
         {activeTab === "leader" && (
           <div style={styles.card}>
             <h2>Leader Dashboard</h2>
- 
+
             <div style={styles.grid}>
               <select
                 style={styles.input}
@@ -183,7 +214,7 @@ function App() {
                   </option>
                 ))}
               </select>
- 
+
               <input
                 style={styles.input}
                 type="date"
@@ -191,11 +222,11 @@ function App() {
                 onChange={(e) => setLeaderDate(e.target.value)}
               />
             </div>
- 
+
             <button style={styles.button} onClick={loadLeaderBookings}>
               Show Bookings
             </button>
- 
+
             <div style={{ marginTop: "20px" }}>
               {leaderBookings.length === 0 ? (
                 <p>No bookings found</p>
@@ -209,7 +240,18 @@ function App() {
                     <p><b>Address:</b> {booking.address}</p>
                     <p><b>Phone:</b> {booking.phone}</p>
                     <p><b>Batch:</b> {booking.batchId}</p>
+                    <p><b>Labour Count:</b> {booking.labourCount || "-"}</p>
                     <p><b>Status:</b> {booking.status}</p>
+                    <p>
+                      <b>Map:</b>{" "}
+                      {booking.mapLink ? (
+                        <a href={booking.mapLink} target="_blank" rel="noreferrer">
+                          Open Map
+                        </a>
+                      ) : (
+                        "Not provided"
+                      )}
+                    </p>
                   </div>
                 ))
               )}
@@ -220,7 +262,7 @@ function App() {
     </div>
   );
 }
- 
+
 const styles = {
   page: {
     background: "#f4f6fb",
@@ -307,5 +349,5 @@ const styles = {
     background: "#fafafa"
   }
 };
- 
+
 export default App;
