@@ -1,49 +1,39 @@
 pipeline {
+    agent any
 
-agent any
+    stages {
+        stage('Build Backend Image') {
+            steps {
+                sh 'docker build --no-cache -t village-backend ./backend'
+            }
+        }
 
-stages {
+        stage('Build Frontend Image') {
+            steps {
+                sh 'docker build --no-cache -t village-frontend ./frontend'
+            }
+        }
 
-stage('Clone Repo') {
+        stage('Deploy') {
+            steps {
+                sh '''
+                docker stop village-backend || true
+                docker rm village-backend || true
 
-steps {
+                docker stop village-frontend || true
+                docker rm village-frontend || true
 
-git 'https://github.com/sivaprasad-11/Village-Labour-App'
+                docker run -d --name village-backend --network village-net \
+                  -e AWS_REGION=ap-south-1 \
+                  -e TABLE_BATCHES=LabourBatches \
+                  -e TABLE_BOOKINGS=Bookings \
+                  -v /root/.aws:/root/.aws:ro \
+                  village-backend:latest
 
-}
-
-}
-
-stage('Build Backend Image') {
-
-steps {
-
-sh 'docker build -t backend backend'
-
-}
-
-}
-
-stage('Build Frontend Image') {
-
-steps {
-
-sh 'docker build -t frontend frontend'
-
-}
-
-}
-
-stage('Deploy') {
-
-steps {
-
-sh 'docker compose -f deploy/docker-compose.prod.yml up -d'
-
-}
-
-}
-
-}
-
+                docker run -d --name village-frontend --network village-net \
+                  village-frontend:latest
+                '''
+            }
+        }
+    }
 }
