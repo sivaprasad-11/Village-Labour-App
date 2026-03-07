@@ -1,0 +1,44 @@
+name: Deploy Farm Helper
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd /home/ubuntu/Village-Labour-App
+
+            git pull origin main
+
+            docker build --no-cache -t village-backend ./backend
+            docker build --no-cache -t village-frontend ./frontend
+
+            docker stop village-backend || true
+            docker rm village-backend || true
+
+            docker stop village-frontend || true
+            docker rm village-frontend || true
+
+            docker run -d --name village-backend --network village-net \
+              -e AWS_REGION=ap-south-1 \
+              -e TABLE_BATCHES=LabourBatches \
+              -e TABLE_BOOKINGS=Bookings \
+              -v /root/.aws:/root/.aws:ro \
+              village-backend:latest
+
+            docker run -d --name village-frontend --network village-net \
+              village-frontend:latest
