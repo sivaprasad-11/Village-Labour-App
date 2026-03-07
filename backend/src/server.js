@@ -63,8 +63,17 @@ app.get("/api/bookings", async (req, res) => {
 
 app.post("/api/book", async (req, res) => {
   try {
-    const { farmerName, date, batchId, village, workType, address, phone } =
-      req.body;
+    const {
+      farmerName,
+      date,
+      batchId,
+      village,
+      workType,
+      address,
+      phone,
+      labourCount,
+      mapLink
+    } = req.body;
 
     if (!farmerName || !date || !batchId) {
       return res
@@ -72,10 +81,10 @@ app.post("/api/book", async (req, res) => {
         .json({ error: "farmerName, date, batchId are required" });
     }
 
-    const pk = `${batchId}#${date}`;
+    const bookingId = BOOKING#${Date.now()};
 
     const booking = {
-      pk,
+      pk: bookingId,
       batchId,
       date,
       farmerName,
@@ -83,6 +92,8 @@ app.post("/api/book", async (req, res) => {
       workType: workType || "",
       address: address || "",
       phone: phone || "",
+      labourCount: labourCount || "",
+      mapLink: mapLink || "",
       status: "BOOKED",
       createdAt: new Date().toISOString()
     };
@@ -90,23 +101,16 @@ app.post("/api/book", async (req, res) => {
     await docClient.send(
       new PutCommand({
         TableName: BOOKINGS_TABLE,
-        Item: booking,
-        ConditionExpression: "attribute_not_exists(pk)"
+        Item: booking
       })
     );
 
     res.json({ message: "Booking saved", booking });
   } catch (err) {
-    if (err?.name === "ConditionalCheckFailedException") {
-      return res
-        .status(409)
-        .json({ error: "Already booked for this batch and date" });
-    }
-
     console.error("book error:", err);
     res.status(500).json({ error: "Booking failed" });
   }
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(Server running on port ${PORT}));
