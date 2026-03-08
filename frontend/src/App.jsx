@@ -142,8 +142,10 @@ function App() {
       <div style={styles.container}>
         <div style={styles.heroCard}>
           <div>
-            <h1 style={styles.title}>Farm Helper</h1>
-            <p style={styles.subtitle}>Village Labour Booking System</p>
+            <h1 style={styles.title}>Paramatapalli Village Labour Booking App</h1>
+            <p style={styles.subtitle}>
+This website is designed for Paramatapalli village labour booking. Farmers can easily request labour and labour leaders can view bookings, contact farmers, check payment status and open field location in map.
+</p>
           </div>
           <div style={styles.heroBadge}>Fast • Simple • Mobile Friendly</div>
         </div>
@@ -434,7 +436,7 @@ function App() {
         )}
 
         <div style={styles.footer}>
-          Farm Helper • Smart village labour booking made simple
+          Paramatapalli Village Labour Booking App • Designed for village labour coordination • Created by Dumbu (Prasad Reddy)
         </div>
       </div>
     </div>
