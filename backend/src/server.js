@@ -4,7 +4,8 @@ import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import {
   DynamoDBDocumentClient,
   ScanCommand,
-  PutCommand
+  PutCommand,
+  UpdateCommand
 } from "@aws-sdk/lib-dynamodb";
 
 const app = express();
@@ -126,6 +127,33 @@ app.post("/api/book", async (req, res) => {
   } catch (err) {
     console.error("book error:", err);
     res.status(500).json({ error: "Booking failed" });
+  }
+});
+
+app.post("/api/payment-paid", async (req, res) => {
+  try {
+    const { pk } = req.body;
+
+    if (!pk) {
+      return res.status(400).json({ error: "pk is required" });
+    }
+
+    await docClient.send(
+      new UpdateCommand({
+        TableName: BOOKINGS_TABLE,
+        Key: { pk },
+        UpdateExpression: "SET paymentStatus = :paymentStatus",
+        ExpressionAttributeValues: {
+          ":paymentStatus": "PAID"
+        },
+        ReturnValues: "ALL_NEW"
+      })
+    );
+
+    res.json({ message: "Payment status updated to PAID" });
+  } catch (err) {
+    console.error("payment update error:", err);
+    res.status(500).json({ error: "Failed to update payment status" });
   }
 });
 
