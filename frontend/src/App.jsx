@@ -239,6 +239,11 @@ function App() {
                     <p><b>Work:</b> {booking.workType}</p>
                     <p><b>Address:</b> {booking.address}</p>
                     <p><b>Phone:</b> {booking.phone}</p>
+                    <div style={styles.actionRow}>
+                      <a href={`tel:${booking.phone}`} style={styles.callButton}>
+                        Call Farmer
+                      </a>
+                    </div>
                     <p><b>Batch:</b> {booking.batchId}</p>
                     <p><b>Labour Count:</b> {booking.labourCount || "-"}</p>
                     <p><b>Status:</b> {booking.status}</p>
@@ -347,6 +352,18 @@ const styles = {
     padding: "14px",
     marginBottom: "12px",
     background: "#fafafa"
+  },
+  actionRow: {
+    marginBottom: "10px"
+  },
+  callButton: {
+    display: "inline-block",
+    background: "#2563eb",
+    color: "#fff",
+    textDecoration: "none",
+    padding: "8px 12px",
+    borderRadius: "8px",
+    fontWeight: "600"
   }
 };
 
