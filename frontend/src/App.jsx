@@ -25,6 +25,37 @@ function App() {
     getBatches().then(setBatches);
   }, []);
 
+  const handleUseLocation = () => {
+    if (!navigator.geolocation) {
+      setMessage("Location is not supported on this device/browser");
+      setMessageType("error");
+      return;
+    }
+
+    setMessage("Getting current location...");
+    setMessageType("success");
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        const link = `https://www.google.com/maps?q=${lat},${lng}`;
+        setMapLink(link);
+        setMessage("Current location added successfully");
+        setMessageType("success");
+      },
+      () => {
+        setMessage("Unable to fetch current location");
+        setMessageType("error");
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
+    );
+  };
+
   const submit = async () => {
     setMessage("");
     setMessageType("");
@@ -161,7 +192,7 @@ function App() {
 
               <input
                 style={styles.input}
-                placeholder="Address"
+                placeholder="Landmark / Field Name"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
               />
@@ -195,12 +226,24 @@ function App() {
                 ))}
               </select>
 
-              <input
-                style={{ ...styles.input, gridColumn: "1 / -1" }}
-                placeholder="Google Map Link (optional)"
-                value={mapLink}
-                onChange={(e) => setMapLink(e.target.value)}
-              />
+              <div style={{ gridColumn: "1 / -1" }}>
+                <div style={styles.locationRow}>
+                  <button
+                    type="button"
+                    style={styles.locationButton}
+                    onClick={handleUseLocation}
+                  >
+                    📍 Use My Location
+                  </button>
+                </div>
+
+                <input
+                  style={{ ...styles.input, width: "100%", marginTop: "10px" }}
+                  placeholder="Google Map Link (optional)"
+                  value={mapLink}
+                  onChange={(e) => setMapLink(e.target.value)}
+                />
+              </div>
             </div>
 
             <button style={styles.button} onClick={submit}>
@@ -249,7 +292,7 @@ function App() {
                     <p><b>Date:</b> {booking.date}</p>
                     <p><b>Village:</b> {booking.village}</p>
                     <p><b>Work:</b> {booking.workType}</p>
-                    <p><b>Address:</b> {booking.address}</p>
+                    <p><b>Landmark / Field Name:</b> {booking.address}</p>
                     <p><b>Phone:</b> {booking.phone}</p>
 
                     <div style={styles.actionRow}>
@@ -351,7 +394,8 @@ const styles = {
   input: {
     padding: "12px",
     borderRadius: "8px",
-    border: "1px solid #ccc"
+    border: "1px solid #ccc",
+    boxSizing: "border-box"
   },
   button: {
     background: "#16a34a",
@@ -360,6 +404,19 @@ const styles = {
     padding: "12px 18px",
     borderRadius: "8px",
     cursor: "pointer"
+  },
+  locationRow: {
+    display: "flex",
+    justifyContent: "flex-start"
+  },
+  locationButton: {
+    background: "#0f766e",
+    color: "#fff",
+    border: "none",
+    padding: "10px 14px",
+    borderRadius: "8px",
+    cursor: "pointer",
+    fontWeight: "600"
   },
   success: {
     background: "#dcfce7",
