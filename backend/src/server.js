@@ -97,8 +97,7 @@ app.post("/api/book", async (req, res) => {
       });
     }
 
-    const bookingId = BOOKING#${Date.now()};
-
+    const bookingId = `BOOKING#${Date.now()}`;
     const booking = {
       pk: bookingId,
       batchId,
