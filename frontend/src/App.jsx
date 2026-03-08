@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { getBatches, getBookings, bookBatch, markPaymentPaid } from "./api";
 
 function App() {
+  const [lang, setLang] = useState("en");
   const [activeTab, setActiveTab] = useState("farmer");
   const [batches, setBatches] = useState([]);
 
@@ -21,18 +22,141 @@ function App() {
   const [leaderDate, setLeaderDate] = useState("");
   const [leaderBookings, setLeaderBookings] = useState([]);
 
+  const t = {
+    en: {
+      title: "Paramatapalli Village Labour Booking App",
+      subtitle:
+        "This website is designed for Paramatapalli village labour booking. Farmers can easily request labour and labour leaders can view bookings, contact farmers, check payment status and open field location in map.",
+      heroBadge: "Fast • Simple • Mobile Friendly",
+      farmerTab: "Farmer Booking",
+      leaderTab: "Leader Dashboard",
+      bookLabour: "Book Labour",
+      bookLabourDesc:
+        "Enter farmer details and reserve an available labour batch.",
+      farmerName: "Farmer Name",
+      farmerNamePlaceholder: "Enter farmer name",
+      date: "Date",
+      village: "Village",
+      villagePlaceholder: "Enter village",
+      workType: "Work Type",
+      selectWorkType: "Select Work Type",
+      work1: "Tomato perakadam",
+      work2: "Chetlu thogadam",
+      work3: "Purri kattadam",
+      work4: "Other work",
+      landmark: "Landmark / Field Name",
+      landmarkPlaceholder: "Enter field or landmark",
+      phone: "Phone Number",
+      phonePlaceholder: "Enter phone number",
+      labourCount: "Number of Labour Required",
+      labourCountPlaceholder: "Enter labour count",
+      selectBatch: "Select Batch",
+      location: "Location",
+      useMyLocation: "📍 Use My Location",
+      mapPlaceholder: "Google Map Link (optional)",
+      bookButton: "Book Labour",
+      gettingLocation: "Getting current location...",
+      locationAdded: "Current location added successfully",
+      locationNotSupported: "Location is not supported on this device/browser",
+      locationFailed: "Unable to fetch current location",
+      fillRequired: "Please fill all required fields",
+      bookingSuccess: "Booking successful",
+
+      leaderTitle: "Leader Dashboard",
+      leaderDesc:
+        "Check bookings, contact farmers, view location and update payment.",
+      showBookings: "Show Bookings",
+      totalBookings: "Total Bookings",
+      labourNeeded: "Labour Needed",
+      paid: "Paid",
+      pending: "Pending",
+      noBookings:
+        "No bookings found. Select batch and date to view details.",
+      callFarmer: "Call Farmer",
+      openMap: "Open Map",
+      noLocation: "Location not provided",
+      batch: "Batch",
+      paymentStatus: "Payment Status",
+      markPaid: "Mark as PAID",
+      paidDone: "Paid ✔",
+      footer:
+        "Paramatapalli Village Labour Booking App • Designed for village labour coordination • Created by Dumbu (Prasad Reddy)"
+    },
+    te: {
+      title: "పరమటపల్లి గ్రామ కూలీల బుకింగ్ యాప్",
+      subtitle:
+        "ఈ వెబ్‌సైట్ పరమటపల్లి గ్రామ స్థాయి కూలీల బుకింగ్ కోసం రూపొందించబడింది. రైతులు సులభంగా కూలీలను బుక్ చేయవచ్చు. లీడర్లు బుకింగ్స్ చూడవచ్చు, రైతులను సంప్రదించవచ్చు, చెల్లింపు స్థితి తెలుసుకోవచ్చు, మ్యాప్ లో లొకేషన్ ఓపెన్ చేయవచ్చు.",
+      heroBadge: "వేగంగా • సులభంగా • మొబైల్‌కు అనుకూలం",
+      farmerTab: "రైతు బుకింగ్",
+      leaderTab: "లీడర్ డాష్‌బోర్డ్",
+      bookLabour: "కూలీలను బుక్ చేయండి",
+      bookLabourDesc:
+        "రైతు వివరాలు నమోదు చేసి అందుబాటులో ఉన్న కూలీల బ్యాచ్‌ను బుక్ చేయండి.",
+      farmerName: "రైతు పేరు",
+      farmerNamePlaceholder: "రైతు పేరు నమోదు చేయండి",
+      date: "తేదీ",
+      village: "గ్రామం",
+      villagePlaceholder: "గ్రామం పేరు నమోదు చేయండి",
+      workType: "పని రకం",
+      selectWorkType: "పని రకం ఎంచుకోండి",
+      work1: "టమోటా పెరకడం",
+      work2: "చెట్లు తొగడం",
+      work3: "పుర్రి కట్టడం",
+      work4: "ఇతర పని",
+      landmark: "ల్యాండ్‌మార్క్ / ఫీల్డ్ పేరు",
+      landmarkPlaceholder: "ఫీల్డ్ లేదా గుర్తు నమోదు చేయండి",
+      phone: "ఫోన్ నంబర్",
+      phonePlaceholder: "ఫోన్ నంబర్ నమోదు చేయండి",
+      labourCount: "అవసరమైన కూలీల సంఖ్య",
+      labourCountPlaceholder: "కూలీల సంఖ్య నమోదు చేయండి",
+      selectBatch: "బ్యాచ్ ఎంచుకోండి",
+      location: "లొకేషన్",
+      useMyLocation: "📍 నా ప్రస్తుత స్థానం",
+      mapPlaceholder: "గూగుల్ మ్యాప్ లింక్ (ఐచ్చికం)",
+      bookButton: "బుక్ చేయండి",
+      gettingLocation: "ప్రస్తుత లొకేషన్ తీసుకుంటోంది...",
+      locationAdded: "ప్రస్తుత లొకేషన్ విజయవంతంగా చేర్చబడింది",
+      locationNotSupported: "ఈ డివైస్/బ్రౌజర్‌లో లొకేషన్ సపోర్ట్ లేదు",
+      locationFailed: "ప్రస్తుత లొకేషన్ పొందలేకపోయాం",
+      fillRequired: "అన్ని అవసరమైన వివరాలు నమోదు చేయండి",
+      bookingSuccess: "బుకింగ్ విజయవంతమైంది",
+
+      leaderTitle: "లీడర్ డాష్‌బోర్డ్",
+      leaderDesc:
+        "బుకింగ్స్ చూడండి, రైతులను సంప్రదించండి, లొకేషన్ చూడండి, చెల్లింపును అప్‌డేట్ చేయండి.",
+      showBookings: "బుకింగ్స్ చూపించు",
+      totalBookings: "మొత్తం బుకింగ్స్",
+      labourNeeded: "అవసరమైన కూలీలు",
+      paid: "చెల్లించినవి",
+      pending: "పెండింగ్",
+      noBookings:
+        "బుకింగ్స్ లేవు. బ్యాచ్ మరియు తేదీ ఎంచుకుని వివరాలు చూడండి.",
+      callFarmer: "రైతుకు కాల్ చేయండి",
+      openMap: "మ్యాప్ ఓపెన్ చేయండి",
+      noLocation: "లొకేషన్ ఇవ్వలేదు",
+      batch: "బ్యాచ్",
+      paymentStatus: "చెల్లింపు స్థితి",
+      markPaid: "PAID గా మార్చు",
+      paidDone: "Paid ✔",
+      footer:
+        "పరమటపల్లి గ్రామ కూలీల బుకింగ్ యాప్ • గ్రామ కూలీల సమన్వయం కోసం రూపొందించబడింది • రూపొందించినవారు Dumbu (Prasad Reddy)"
+    }
+  };
+
+  const text = t[lang];
+
   useEffect(() => {
     getBatches().then(setBatches);
   }, []);
 
   const handleUseLocation = () => {
     if (!navigator.geolocation) {
-      setMessage("Location is not supported on this device/browser");
+      setMessage(text.locationNotSupported);
       setMessageType("error");
       return;
     }
 
-    setMessage("Getting current location...");
+    setMessage(text.gettingLocation);
     setMessageType("success");
 
     navigator.geolocation.getCurrentPosition(
@@ -41,11 +165,11 @@ function App() {
         const lng = position.coords.longitude;
         const link = `https://www.google.com/maps?q=${lat},${lng}`;
         setMapLink(link);
-        setMessage("Current location added successfully");
+        setMessage(text.locationAdded);
         setMessageType("success");
       },
       () => {
-        setMessage("Unable to fetch current location");
+        setMessage(text.locationFailed);
         setMessageType("error");
       },
       {
@@ -70,7 +194,7 @@ function App() {
       !phone ||
       !labourCount
     ) {
-      setMessage("Please fill all required fields");
+      setMessage(text.fillRequired);
       setMessageType("error");
       return;
     }
@@ -93,7 +217,7 @@ function App() {
       return;
     }
 
-    setMessage("Booking successful");
+    setMessage(text.bookingSuccess);
     setMessageType("success");
 
     setFarmerName("");
@@ -141,13 +265,20 @@ function App() {
     <div style={styles.page}>
       <div style={styles.container}>
         <div style={styles.heroCard}>
-          <div>
-            <h1 style={styles.title}>Paramatapalli Village Labour Booking App</h1>
-            <p style={styles.subtitle}>
-This website is designed for Paramatapalli village labour booking. Farmers can easily request labour and labour leaders can view bookings, contact farmers, check payment status and open field location in map.
-</p>
+          <div style={{ flex: 1 }}>
+            <h1 style={styles.title}>{text.title}</h1>
+            <p style={styles.subtitle}>{text.subtitle}</p>
           </div>
-          <div style={styles.heroBadge}>Fast • Simple • Mobile Friendly</div>
+
+          <div style={styles.heroRight}>
+            <button
+              style={styles.langButton}
+              onClick={() => setLang(lang === "en" ? "te" : "en")}
+            >
+              {lang === "en" ? "తెలుగు" : "English"}
+            </button>
+            <div style={styles.heroBadge}>{text.heroBadge}</div>
+          </div>
         </div>
 
         <div style={styles.tabWrapper}>
@@ -155,14 +286,14 @@ This website is designed for Paramatapalli village labour booking. Farmers can e
             style={activeTab === "farmer" ? styles.activeTab : styles.tab}
             onClick={() => setActiveTab("farmer")}
           >
-            Farmer Booking
+            {text.farmerTab}
           </button>
 
           <button
             style={activeTab === "leader" ? styles.activeTab : styles.tab}
             onClick={() => setActiveTab("leader")}
           >
-            Leader Dashboard
+            {text.leaderTab}
           </button>
         </div>
 
@@ -170,10 +301,8 @@ This website is designed for Paramatapalli village labour booking. Farmers can e
           <div style={styles.card}>
             <div style={styles.cardHeader}>
               <div>
-                <h2 style={styles.cardTitle}>Book Labour</h2>
-                <p style={styles.cardSubtitle}>
-                  Enter farmer details and reserve an available labour batch.
-                </p>
+                <h2 style={styles.cardTitle}>{text.bookLabour}</h2>
+                <p style={styles.cardSubtitle}>{text.bookLabourDesc}</p>
               </div>
             </div>
 
@@ -185,17 +314,17 @@ This website is designed for Paramatapalli village labour booking. Farmers can e
 
             <div style={styles.grid}>
               <div style={styles.field}>
-                <label style={styles.label}>Farmer Name</label>
+                <label style={styles.label}>{text.farmerName}</label>
                 <input
                   style={styles.input}
-                  placeholder="Enter farmer name"
+                  placeholder={text.farmerNamePlaceholder}
                   value={farmerName}
                   onChange={(e) => setFarmerName(e.target.value)}
                 />
               </div>
 
               <div style={styles.field}>
-                <label style={styles.label}>Date</label>
+                <label style={styles.label}>{text.date}</label>
                 <input
                   style={styles.input}
                   type="date"
@@ -205,70 +334,70 @@ This website is designed for Paramatapalli village labour booking. Farmers can e
               </div>
 
               <div style={styles.field}>
-                <label style={styles.label}>Village</label>
+                <label style={styles.label}>{text.village}</label>
                 <input
                   style={styles.input}
-                  placeholder="Enter village"
+                  placeholder={text.villagePlaceholder}
                   value={village}
                   onChange={(e) => setVillage(e.target.value)}
                 />
               </div>
 
               <div style={styles.field}>
-                <label style={styles.label}>Work Type</label>
+                <label style={styles.label}>{text.workType}</label>
                 <select
                   style={styles.input}
                   value={workType}
                   onChange={(e) => setWorkType(e.target.value)}
                 >
-                  <option value="">Select Work Type</option>
-                  <option value="Tomato perakadam">Tomato perakadam</option>
-                  <option value="Chetlu thogadam">Chetlu thogadam</option>
-                  <option value="Purri kattadam">Purri kattadam</option>
-                  <option value="Other work">Other work</option>
+                  <option value="">{text.selectWorkType}</option>
+                  <option value="Tomato perakadam">{text.work1}</option>
+                  <option value="Chetlu thogadam">{text.work2}</option>
+                  <option value="Purri kattadam">{text.work3}</option>
+                  <option value="Other work">{text.work4}</option>
                 </select>
               </div>
 
               <div style={styles.field}>
-                <label style={styles.label}>Landmark / Field Name</label>
+                <label style={styles.label}>{text.landmark}</label>
                 <input
                   style={styles.input}
-                  placeholder="Enter field or landmark"
+                  placeholder={text.landmarkPlaceholder}
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
                 />
               </div>
 
               <div style={styles.field}>
-                <label style={styles.label}>Phone Number</label>
+                <label style={styles.label}>{text.phone}</label>
                 <input
                   style={styles.input}
-                  placeholder="Enter phone number"
+                  placeholder={text.phonePlaceholder}
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                 />
               </div>
 
               <div style={styles.field}>
-                <label style={styles.label}>Number of Labour Required</label>
+                <label style={styles.label}>{text.labourCount}</label>
                 <input
                   style={styles.input}
                   type="number"
                   min="1"
-                  placeholder="Enter labour count"
+                  placeholder={text.labourCountPlaceholder}
                   value={labourCount}
                   onChange={(e) => setLabourCount(e.target.value)}
                 />
               </div>
 
               <div style={styles.field}>
-                <label style={styles.label}>Select Batch</label>
+                <label style={styles.label}>{text.selectBatch}</label>
                 <select
                   style={styles.input}
                   value={batchId}
                   onChange={(e) => setBatchId(e.target.value)}
                 >
-                  <option value="">Select Batch</option>
+                  <option value="">{text.selectBatch}</option>
                   {batches.map((b) => (
                     <option key={b.batchId} value={b.batchId}>
                       {b.batchId} - {b.leaderName}
@@ -278,19 +407,19 @@ This website is designed for Paramatapalli village labour booking. Farmers can e
               </div>
 
               <div style={{ ...styles.field, gridColumn: "1 / -1" }}>
-                <label style={styles.label}>Location</label>
+                <label style={styles.label}>{text.location}</label>
                 <div style={styles.locationRow}>
                   <button
                     type="button"
                     style={styles.locationButton}
                     onClick={handleUseLocation}
                   >
-                    📍 Use My Location
+                    {text.useMyLocation}
                   </button>
                 </div>
                 <input
                   style={{ ...styles.input, marginTop: "12px" }}
-                  placeholder="Google Map Link (optional)"
+                  placeholder={text.mapPlaceholder}
                   value={mapLink}
                   onChange={(e) => setMapLink(e.target.value)}
                 />
@@ -298,7 +427,7 @@ This website is designed for Paramatapalli village labour booking. Farmers can e
             </div>
 
             <button style={styles.primaryButton} onClick={submit}>
-              Book Labour
+              {text.bookButton}
             </button>
           </div>
         )}
@@ -307,22 +436,20 @@ This website is designed for Paramatapalli village labour booking. Farmers can e
           <div style={styles.card}>
             <div style={styles.cardHeader}>
               <div>
-                <h2 style={styles.cardTitle}>Leader Dashboard</h2>
-                <p style={styles.cardSubtitle}>
-                  Check bookings, contact farmers, view location and update payment.
-                </p>
+                <h2 style={styles.cardTitle}>{text.leaderTitle}</h2>
+                <p style={styles.cardSubtitle}>{text.leaderDesc}</p>
               </div>
             </div>
 
             <div style={styles.grid}>
               <div style={styles.field}>
-                <label style={styles.label}>Select Batch</label>
+                <label style={styles.label}>{text.selectBatch}</label>
                 <select
                   style={styles.input}
                   value={leaderBatchId}
                   onChange={(e) => setLeaderBatchId(e.target.value)}
                 >
-                  <option value="">Select Batch</option>
+                  <option value="">{text.selectBatch}</option>
                   {batches.map((b) => (
                     <option key={b.batchId} value={b.batchId}>
                       {b.batchId} - {b.leaderName}
@@ -332,7 +459,7 @@ This website is designed for Paramatapalli village labour booking. Farmers can e
               </div>
 
               <div style={styles.field}>
-                <label style={styles.label}>Select Date</label>
+                <label style={styles.label}>{text.date}</label>
                 <input
                   style={styles.input}
                   type="date"
@@ -343,28 +470,28 @@ This website is designed for Paramatapalli village labour booking. Farmers can e
             </div>
 
             <button style={styles.primaryButton} onClick={loadLeaderBookings}>
-              Show Bookings
+              {text.showBookings}
             </button>
 
             {leaderBookings.length > 0 && (
               <div style={styles.summaryGrid}>
                 <div style={styles.summaryCard}>
-                  <div style={styles.summaryLabel}>Total Bookings</div>
+                  <div style={styles.summaryLabel}>{text.totalBookings}</div>
                   <div style={styles.summaryValue}>{leaderBookings.length}</div>
                 </div>
 
                 <div style={styles.summaryCard}>
-                  <div style={styles.summaryLabel}>Labour Needed</div>
+                  <div style={styles.summaryLabel}>{text.labourNeeded}</div>
                   <div style={styles.summaryValue}>{totalLabour}</div>
                 </div>
 
                 <div style={styles.summaryCard}>
-                  <div style={styles.summaryLabel}>Paid</div>
+                  <div style={styles.summaryLabel}>{text.paid}</div>
                   <div style={styles.summaryValue}>{paidCount}</div>
                 </div>
 
                 <div style={styles.summaryCard}>
-                  <div style={styles.summaryLabel}>Pending</div>
+                  <div style={styles.summaryLabel}>{text.pending}</div>
                   <div style={styles.summaryValue}>{pendingCount}</div>
                 </div>
               </div>
@@ -372,9 +499,7 @@ This website is designed for Paramatapalli village labour booking. Farmers can e
 
             <div style={{ marginTop: "20px" }}>
               {leaderBookings.length === 0 ? (
-                <div style={styles.emptyState}>
-                  No bookings found. Select batch and date to view details.
-                </div>
+                <div style={styles.emptyState}>{text.noBookings}</div>
               ) : (
                 leaderBookings.map((booking) => (
                   <div key={booking.pk} style={styles.bookingCard}>
@@ -385,19 +510,21 @@ This website is designed for Paramatapalli village labour booking. Farmers can e
                           {booking.village} • {booking.date}
                         </div>
                       </div>
-                      <div style={styles.workBadge}>{booking.workType}</div>
+                      <div style={styles.workBadge}>
+                        {booking.workType || text.work4}
+                      </div>
                     </div>
 
                     <div style={styles.detailGrid}>
-                      <div><b>Batch:</b> {booking.batchId}</div>
-                      <div><b>Labour Count:</b> {booking.labourCount || "-"}</div>
-                      <div><b>Phone:</b> {booking.phone}</div>
-                      <div><b>Landmark / Field Name:</b> {booking.address}</div>
+                      <div><b>{text.batch}:</b> {booking.batchId}</div>
+                      <div><b>{text.labourCount}:</b> {booking.labourCount || "-"}</div>
+                      <div><b>{text.phone}:</b> {booking.phone}</div>
+                      <div><b>{text.landmark}:</b> {booking.address}</div>
                     </div>
 
                     <div style={styles.actionRow}>
                       <a href={`tel:${booking.phone}`} style={styles.callButton}>
-                        Call Farmer
+                        {text.callFarmer}
                       </a>
 
                       {booking.mapLink ? (
@@ -407,24 +534,24 @@ This website is designed for Paramatapalli village labour booking. Farmers can e
                           rel="noreferrer"
                           style={styles.mapButton}
                         >
-                          Open Map
+                          {text.openMap}
                         </a>
                       ) : (
-                        <span style={styles.noMapText}>Location not provided</span>
+                        <span style={styles.noMapText}>{text.noLocation}</span>
                       )}
                     </div>
 
                     <div style={styles.paymentRow}>
-                      <span style={styles.paymentLabel}>Payment Status:</span>
+                      <span style={styles.paymentLabel}>{text.paymentStatus}:</span>
 
                       {booking.paymentStatus === "PAID" ? (
-                        <span style={styles.paidBadge}>Paid ✔</span>
+                        <span style={styles.paidBadge}>{text.paidDone}</span>
                       ) : (
                         <button
                           style={styles.paidButton}
                           onClick={() => handleMarkPaid(booking.pk)}
                         >
-                          Mark as PAID
+                          {text.markPaid}
                         </button>
                       )}
                     </div>
@@ -435,9 +562,7 @@ This website is designed for Paramatapalli village labour booking. Farmers can e
           </div>
         )}
 
-        <div style={styles.footer}>
-          Paramatapalli Village Labour Booking App • Designed for village labour coordination • Created by Dumbu (Prasad Reddy)
-        </div>
+        <div style={styles.footer}>{text.footer}</div>
       </div>
     </div>
   );
@@ -466,6 +591,21 @@ const styles = {
     flexWrap: "wrap",
     marginBottom: "18px"
   },
+  heroRight: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "10px",
+    alignItems: "flex-end"
+  },
+  langButton: {
+    background: "#2563eb",
+    color: "#fff",
+    border: "none",
+    padding: "10px 14px",
+    borderRadius: "10px",
+    cursor: "pointer",
+    fontWeight: "700"
+  },
   title: {
     margin: 0,
     fontSize: "32px",
@@ -475,7 +615,8 @@ const styles = {
     color: "#475569",
     marginTop: "8px",
     marginBottom: 0,
-    fontSize: "15px"
+    fontSize: "15px",
+    lineHeight: "1.6"
   },
   heroBadge: {
     background: "#dbeafe",
@@ -527,7 +668,8 @@ const styles = {
     marginTop: "8px",
     marginBottom: 0,
     color: "#64748b",
-    fontSize: "14px"
+    fontSize: "14px",
+    lineHeight: "1.6"
   },
   grid: {
     display: "grid",
@@ -725,7 +867,8 @@ const styles = {
     color: "#64748b",
     fontSize: "13px",
     marginTop: "18px",
-    paddingBottom: "12px"
+    paddingBottom: "12px",
+    lineHeight: "1.6"
   }
 };
 
