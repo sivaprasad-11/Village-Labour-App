@@ -5,7 +5,8 @@ import {
   DynamoDBDocumentClient,
   ScanCommand,
   PutCommand,
-  UpdateCommand
+  UpdateCommand,
+  GetCommand
 } from "@aws-sdk/lib-dynamodb";
 
 const app = express();
@@ -98,6 +99,19 @@ app.post("/api/book", async (req, res) => {
       });
     }
 
+    const batchResult = await docClient.send(
+      new GetCommand({
+        TableName: BATCHES_TABLE,
+        Key: { batchId }
+      })
+    );
+
+    const leaderPhone = batchResult?.Item?.leaderPhone || "";
+
+    console.log("Selected batch:", batchId);
+    console.log("Leader name:", batchResult?.Item?.leaderName || "");
+    console.log("Leader phone:", leaderPhone);
+
     const bookingId = `BOOKING#${Date.now()}`;
 
     const booking = {
@@ -113,6 +127,7 @@ app.post("/api/book", async (req, res) => {
       mapLink: mapLink || "",
       paymentStatus: "PENDING",
       status: "BOOKED",
+      leaderPhone,
       createdAt: new Date().toISOString()
     };
 
@@ -123,7 +138,10 @@ app.post("/api/book", async (req, res) => {
       })
     );
 
-    res.json({ message: "Booking saved", booking });
+    res.json({
+      message: "Booking saved",
+      booking
+    });
   } catch (err) {
     console.error("book error:", err);
     res.status(500).json({ error: "Booking failed" });
