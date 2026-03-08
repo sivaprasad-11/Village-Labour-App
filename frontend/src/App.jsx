@@ -246,6 +246,7 @@ function App() {
                     </div>
                     <p><b>Batch:</b> {booking.batchId}</p>
                     <p><b>Labour Count:</b> {booking.labourCount || "-"}</p>
+                    <p><b>Payment Status:</b> {booking.paymentStatus || "PENDING"}</p>
                     <p><b>Status:</b> {booking.status}</p>
                     <p>
                       <b>Map:</b>{" "}
