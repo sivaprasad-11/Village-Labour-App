@@ -81,7 +81,23 @@ app.post("/api/book", async (req, res) => {
         .json({ error: "farmerName, date, batchId are required" });
     }
 
-    const bookingId = `BOOKING#${Date.now()}`;
+    const existing = await docClient.send(
+      new ScanCommand({
+        TableName: BOOKINGS_TABLE
+      })
+    );
+
+    const alreadyBooked = (existing.Items || []).find(
+      (item) => item.batchId === batchId && item.date === date
+    );
+
+    if (alreadyBooked) {
+      return res.status(400).json({
+        error: "This labour batch is already booked for this date"
+      });
+    }
+
+    const bookingId = BOOKING#${Date.now()};
 
     const booking = {
       pk: bookingId,
@@ -113,4 +129,4 @@ app.post("/api/book", async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(Server running on port ${PORT}));
