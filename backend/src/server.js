@@ -98,6 +98,7 @@ app.post("/api/book", async (req, res) => {
     }
 
     const bookingId = `BOOKING#${Date.now()}`;
+
     const booking = {
       pk: bookingId,
       batchId,
@@ -109,6 +110,7 @@ app.post("/api/book", async (req, res) => {
       phone: phone || "",
       labourCount: labourCount || "",
       mapLink: mapLink || "",
+      paymentStatus: "PENDING",
       status: "BOOKED",
       createdAt: new Date().toISOString()
     };
