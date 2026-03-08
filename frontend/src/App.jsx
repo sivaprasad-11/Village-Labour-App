@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getBatches, getBookings, bookBatch } from "./api";
+import { getBatches, getBookings, bookBatch, markPaymentPaid } from "./api";
 
 function App() {
   const [activeTab, setActiveTab] = useState("farmer");
@@ -79,6 +79,18 @@ function App() {
   const loadLeaderBookings = async () => {
     const data = await getBookings(leaderBatchId, leaderDate);
     setLeaderBookings(data);
+  };
+
+  const handleMarkPaid = async (pk) => {
+    const res = await markPaymentPaid(pk);
+
+    if (res?.error) {
+      alert(res.error);
+      return;
+    }
+
+    const updated = await getBookings(leaderBatchId, leaderDate);
+    setLeaderBookings(updated);
   };
 
   return (
@@ -239,14 +251,30 @@ function App() {
                     <p><b>Work:</b> {booking.workType}</p>
                     <p><b>Address:</b> {booking.address}</p>
                     <p><b>Phone:</b> {booking.phone}</p>
+
                     <div style={styles.actionRow}>
                       <a href={`tel:${booking.phone}`} style={styles.callButton}>
                         Call Farmer
                       </a>
                     </div>
+
                     <p><b>Batch:</b> {booking.batchId}</p>
                     <p><b>Labour Count:</b> {booking.labourCount || "-"}</p>
-                    <p><b>Payment Status:</b> {booking.paymentStatus || "PENDING"}</p>
+
+                    <div style={styles.actionRow}>
+                      <b>Payment Status:</b>{" "}
+                      {booking.paymentStatus === "PAID" ? (
+                        <span style={styles.paidBadge}>Paid ✔</span>
+                      ) : (
+                        <button
+                          style={styles.paidButton}
+                          onClick={() => handleMarkPaid(booking.pk)}
+                        >
+                          Mark as PAID
+                        </button>
+                      )}
+                    </div>
+
                     <p><b>Status:</b> {booking.status}</p>
                     <p>
                       <b>Map:</b>{" "}
@@ -355,7 +383,11 @@ const styles = {
     background: "#fafafa"
   },
   actionRow: {
-    marginBottom: "10px"
+    marginBottom: "10px",
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    flexWrap: "wrap"
   },
   callButton: {
     display: "inline-block",
@@ -365,6 +397,23 @@ const styles = {
     padding: "8px 12px",
     borderRadius: "8px",
     fontWeight: "600"
+  },
+  paidButton: {
+    background: "#16a34a",
+    color: "#fff",
+    border: "none",
+    padding: "8px 12px",
+    borderRadius: "8px",
+    cursor: "pointer",
+    fontWeight: "600"
+  },
+  paidBadge: {
+    display: "inline-block",
+    background: "#dcfce7",
+    color: "#166534",
+    padding: "6px 10px",
+    borderRadius: "8px",
+    fontWeight: "700"
   }
 };
 
