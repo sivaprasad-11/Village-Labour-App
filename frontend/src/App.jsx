@@ -49,7 +49,8 @@ function App() {
       work1: "Tomato perakadam",
       work2: "Chetlu thogadam",
       work3: "Purri kattadam",
-      work4: "Other work",
+      work4: "Mulching paper veyadam, katti natadam",
+      work5: "Other work",
       landmark: "Landmark / Field Name",
       landmarkPlaceholder: "Enter field or landmark",
       phone: "Phone Number",
@@ -116,7 +117,8 @@ function App() {
       work1: "టమోటా పెరకడం",
       work2: "చెట్లు తొగడం",
       work3: "పుర్రి కట్టడం",
-      work4: "ఇతర పని",
+      work4: "మల్చింగ్ పేపర్ వేయడం, కట్టి నాటడం",
+      work5: "ఇతర పని",
       landmark: "ల్యాండ్‌మార్క్ / ఫీల్డ్ పేరు",
       landmarkPlaceholder: "ఫీల్డ్ లేదా గుర్తు నమోదు చేయండి",
       phone: "ఫోన్ నంబర్",
@@ -429,7 +431,10 @@ function App() {
                   <option value="Tomato perakadam">{text.work1}</option>
                   <option value="Chetlu thogadam">{text.work2}</option>
                   <option value="Purri kattadam">{text.work3}</option>
-                  <option value="Other work">{text.work4}</option>
+                  <option value="Mulching paper veyadam, katti natadam">
+                    {text.work4}
+                  </option>
+                  <option value="Other work">{text.work5}</option>
                 </select>
               </div>
 
@@ -638,7 +643,7 @@ function App() {
                             </div>
                           </div>
                           <div style={styles.workBadge}>
-                            {booking.workType || text.work4}
+                            {booking.workType || text.work5}
                           </div>
                         </div>
 
