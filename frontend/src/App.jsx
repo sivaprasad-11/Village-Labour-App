@@ -21,6 +21,12 @@ function App() {
   const [leaderBatchId, setLeaderBatchId] = useState("");
   const [leaderDate, setLeaderDate] = useState("");
   const [leaderBookings, setLeaderBookings] = useState([]);
+  const [leaderPin, setLeaderPin] = useState("");
+  const [leaderAuthenticated, setLeaderAuthenticated] = useState(false);
+  const [leaderMessage, setLeaderMessage] = useState("");
+  const [leaderMessageType, setLeaderMessageType] = useState("");
+
+  const FRONTEND_LEADER_PIN = "1234";
 
   const t = {
     en: {
@@ -65,6 +71,14 @@ function App() {
       leaderTitle: "Leader Dashboard",
       leaderDesc:
         "Check bookings, contact farmers, view location and update payment.",
+      leaderAccessTitle: "Leader Access",
+      leaderAccessDesc: "Enter leader PIN to open dashboard",
+      leaderPin: "Leader PIN",
+      leaderPinPlaceholder: "Enter leader PIN",
+      leaderLogin: "Login",
+      leaderLogout: "Logout",
+      invalidLeaderPin: "Invalid leader PIN",
+      unauthorizedLeader: "Unauthorized leader access",
       showBookings: "Show Bookings",
       totalBookings: "Total Bookings",
       labourNeeded: "Labour Needed",
@@ -124,6 +138,14 @@ function App() {
       leaderTitle: "లీడర్ డాష్‌బోర్డ్",
       leaderDesc:
         "బుకింగ్స్ చూడండి, రైతులను సంప్రదించండి, లొకేషన్ చూడండి, చెల్లింపును అప్‌డేట్ చేయండి.",
+      leaderAccessTitle: "లీడర్ యాక్సెస్",
+      leaderAccessDesc: "డాష్‌బోర్డ్ ఓపెన్ చేయడానికి లీడర్ PIN ఇవ్వండి",
+      leaderPin: "లీడర్ PIN",
+      leaderPinPlaceholder: "లీడర్ PIN నమోదు చేయండి",
+      leaderLogin: "లాగిన్",
+      leaderLogout: "లాగౌట్",
+      invalidLeaderPin: "తప్పు లీడర్ PIN",
+      unauthorizedLeader: "అనుమతి లేని లీడర్ యాక్సెస్",
       showBookings: "బుకింగ్స్ చూపించు",
       totalBookings: "మొత్తం బుకింగ్స్",
       labourNeeded: "అవసరమైన కూలీలు",
@@ -180,6 +202,29 @@ function App() {
     );
   };
 
+  const handleLeaderAccess = () => {
+    setLeaderMessage("");
+    setLeaderMessageType("");
+
+    if (leaderPin === FRONTEND_LEADER_PIN) {
+      setLeaderAuthenticated(true);
+    } else {
+      setLeaderAuthenticated(false);
+      setLeaderMessage(text.invalidLeaderPin);
+      setLeaderMessageType("error");
+    }
+  };
+
+  const handleLeaderLogout = () => {
+    setLeaderAuthenticated(false);
+    setLeaderPin("");
+    setLeaderBatchId("");
+    setLeaderDate("");
+    setLeaderBookings([]);
+    setLeaderMessage("");
+    setLeaderMessageType("");
+  };
+
   const submit = async () => {
     setMessage("");
     setMessageType("");
@@ -232,20 +277,50 @@ function App() {
   };
 
   const loadLeaderBookings = async () => {
-    const data = await getBookings(leaderBatchId, leaderDate);
-    setLeaderBookings(data);
-  };
+    setLeaderMessage("");
+    setLeaderMessageType("");
 
-  const handleMarkPaid = async (pk) => {
-    const res = await markPaymentPaid(pk);
+    const data = await getBookings(leaderBatchId, leaderDate, leaderPin);
 
-    if (res?.error) {
-      alert(res.error);
+    if (data?.error) {
+      setLeaderMessage(
+        data.error === "Unauthorized leader access"
+          ? text.unauthorizedLeader
+          : data.error
+      );
+      setLeaderMessageType("error");
+      setLeaderBookings([]);
       return;
     }
 
-    const updated = await getBookings(leaderBatchId, leaderDate);
-    setLeaderBookings(updated);
+    setLeaderBookings(Array.isArray(data) ? data : []);
+  };
+
+  const handleMarkPaid = async (pk) => {
+    const res = await markPaymentPaid(pk, leaderPin);
+
+    if (res?.error) {
+      alert(
+        res.error === "Unauthorized leader access"
+          ? text.unauthorizedLeader
+          : res.error
+      );
+      return;
+    }
+
+    const updated = await getBookings(leaderBatchId, leaderDate, leaderPin);
+
+    if (updated?.error) {
+      setLeaderMessage(
+        updated.error === "Unauthorized leader access"
+          ? text.unauthorizedLeader
+          : updated.error
+      );
+      setLeaderMessageType("error");
+      return;
+    }
+
+    setLeaderBookings(Array.isArray(updated) ? updated : []);
   };
 
   const totalLabour = leaderBookings.reduce(
@@ -434,131 +509,185 @@ function App() {
 
         {activeTab === "leader" && (
           <div style={styles.card}>
-            <div style={styles.cardHeader}>
-              <div>
-                <h2 style={styles.cardTitle}>{text.leaderTitle}</h2>
-                <p style={styles.cardSubtitle}>{text.leaderDesc}</p>
-              </div>
-            </div>
-
-            <div style={styles.grid}>
-              <div style={styles.field}>
-                <label style={styles.label}>{text.selectBatch}</label>
-                <select
-                  style={styles.input}
-                  value={leaderBatchId}
-                  onChange={(e) => setLeaderBatchId(e.target.value)}
-                >
-                  <option value="">{text.selectBatch}</option>
-                  {batches.map((b) => (
-                    <option key={b.batchId} value={b.batchId}>
-                      {b.batchId} - {b.leaderName}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div style={styles.field}>
-                <label style={styles.label}>{text.date}</label>
-                <input
-                  style={styles.input}
-                  type="date"
-                  value={leaderDate}
-                  onChange={(e) => setLeaderDate(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <button style={styles.primaryButton} onClick={loadLeaderBookings}>
-              {text.showBookings}
-            </button>
-
-            {leaderBookings.length > 0 && (
-              <div style={styles.summaryGrid}>
-                <div style={styles.summaryCard}>
-                  <div style={styles.summaryLabel}>{text.totalBookings}</div>
-                  <div style={styles.summaryValue}>{leaderBookings.length}</div>
+            {!leaderAuthenticated ? (
+              <>
+                <div style={styles.cardHeader}>
+                  <div>
+                    <h2 style={styles.cardTitle}>{text.leaderAccessTitle}</h2>
+                    <p style={styles.cardSubtitle}>{text.leaderAccessDesc}</p>
+                  </div>
                 </div>
 
-                <div style={styles.summaryCard}>
-                  <div style={styles.summaryLabel}>{text.labourNeeded}</div>
-                  <div style={styles.summaryValue}>{totalLabour}</div>
+                {leaderMessage && (
+                  <div
+                    style={
+                      leaderMessageType === "success" ? styles.success : styles.error
+                    }
+                  >
+                    {leaderMessage}
+                  </div>
+                )}
+
+                <div style={styles.leaderLoginBox}>
+                  <div style={styles.field}>
+                    <label style={styles.label}>{text.leaderPin}</label>
+                    <input
+                      style={styles.input}
+                      type="password"
+                      placeholder={text.leaderPinPlaceholder}
+                      value={leaderPin}
+                      onChange={(e) => setLeaderPin(e.target.value)}
+                    />
+                  </div>
+
+                  <button style={styles.primaryButton} onClick={handleLeaderAccess}>
+                    {text.leaderLogin}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={styles.cardHeaderRow}>
+                  <div>
+                    <h2 style={styles.cardTitle}>{text.leaderTitle}</h2>
+                    <p style={styles.cardSubtitle}>{text.leaderDesc}</p>
+                  </div>
+
+                  <button style={styles.logoutButton} onClick={handleLeaderLogout}>
+                    {text.leaderLogout}
+                  </button>
                 </div>
 
-                <div style={styles.summaryCard}>
-                  <div style={styles.summaryLabel}>{text.paid}</div>
-                  <div style={styles.summaryValue}>{paidCount}</div>
+                {leaderMessage && (
+                  <div
+                    style={
+                      leaderMessageType === "success" ? styles.success : styles.error
+                    }
+                  >
+                    {leaderMessage}
+                  </div>
+                )}
+
+                <div style={styles.grid}>
+                  <div style={styles.field}>
+                    <label style={styles.label}>{text.selectBatch}</label>
+                    <select
+                      style={styles.input}
+                      value={leaderBatchId}
+                      onChange={(e) => setLeaderBatchId(e.target.value)}
+                    >
+                      <option value="">{text.selectBatch}</option>
+                      {batches.map((b) => (
+                        <option key={b.batchId} value={b.batchId}>
+                          {b.batchId} - {b.leaderName}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div style={styles.field}>
+                    <label style={styles.label}>{text.date}</label>
+                    <input
+                      style={styles.input}
+                      type="date"
+                      value={leaderDate}
+                      onChange={(e) => setLeaderDate(e.target.value)}
+                    />
+                  </div>
                 </div>
 
-                <div style={styles.summaryCard}>
-                  <div style={styles.summaryLabel}>{text.pending}</div>
-                  <div style={styles.summaryValue}>{pendingCount}</div>
-                </div>
-              </div>
-            )}
+                <button style={styles.primaryButton} onClick={loadLeaderBookings}>
+                  {text.showBookings}
+                </button>
 
-            <div style={{ marginTop: "20px" }}>
-              {leaderBookings.length === 0 ? (
-                <div style={styles.emptyState}>{text.noBookings}</div>
-              ) : (
-                leaderBookings.map((booking) => (
-                  <div key={booking.pk} style={styles.bookingCard}>
-                    <div style={styles.bookingTop}>
-                      <div>
-                        <div style={styles.farmerName}>{booking.farmerName}</div>
-                        <div style={styles.smallText}>
-                          {booking.village} • {booking.date}
-                        </div>
-                      </div>
-                      <div style={styles.workBadge}>
-                        {booking.workType || text.work4}
-                      </div>
+                {leaderBookings.length > 0 && (
+                  <div style={styles.summaryGrid}>
+                    <div style={styles.summaryCard}>
+                      <div style={styles.summaryLabel}>{text.totalBookings}</div>
+                      <div style={styles.summaryValue}>{leaderBookings.length}</div>
                     </div>
 
-                    <div style={styles.detailGrid}>
-                      <div><b>{text.batch}:</b> {booking.batchId}</div>
-                      <div><b>{text.labourCount}:</b> {booking.labourCount || "-"}</div>
-                      <div><b>{text.phone}:</b> {booking.phone}</div>
-                      <div><b>{text.landmark}:</b> {booking.address}</div>
+                    <div style={styles.summaryCard}>
+                      <div style={styles.summaryLabel}>{text.labourNeeded}</div>
+                      <div style={styles.summaryValue}>{totalLabour}</div>
                     </div>
 
-                    <div style={styles.actionRow}>
-                      <a href={`tel:${booking.phone}`} style={styles.callButton}>
-                        {text.callFarmer}
-                      </a>
-
-                      {booking.mapLink ? (
-                        <a
-                          href={booking.mapLink}
-                          target="_blank"
-                          rel="noreferrer"
-                          style={styles.mapButton}
-                        >
-                          {text.openMap}
-                        </a>
-                      ) : (
-                        <span style={styles.noMapText}>{text.noLocation}</span>
-                      )}
+                    <div style={styles.summaryCard}>
+                      <div style={styles.summaryLabel}>{text.paid}</div>
+                      <div style={styles.summaryValue}>{paidCount}</div>
                     </div>
 
-                    <div style={styles.paymentRow}>
-                      <span style={styles.paymentLabel}>{text.paymentStatus}:</span>
-
-                      {booking.paymentStatus === "PAID" ? (
-                        <span style={styles.paidBadge}>{text.paidDone}</span>
-                      ) : (
-                        <button
-                          style={styles.paidButton}
-                          onClick={() => handleMarkPaid(booking.pk)}
-                        >
-                          {text.markPaid}
-                        </button>
-                      )}
+                    <div style={styles.summaryCard}>
+                      <div style={styles.summaryLabel}>{text.pending}</div>
+                      <div style={styles.summaryValue}>{pendingCount}</div>
                     </div>
                   </div>
-                ))
-              )}
-            </div>
+                )}
+
+                <div style={{ marginTop: "20px" }}>
+                  {leaderBookings.length === 0 ? (
+                    <div style={styles.emptyState}>{text.noBookings}</div>
+                  ) : (
+                    leaderBookings.map((booking) => (
+                      <div key={booking.pk} style={styles.bookingCard}>
+                        <div style={styles.bookingTop}>
+                          <div>
+                            <div style={styles.farmerName}>{booking.farmerName}</div>
+                            <div style={styles.smallText}>
+                              {booking.village} • {booking.date}
+                            </div>
+                          </div>
+                          <div style={styles.workBadge}>
+                            {booking.workType || text.work4}
+                          </div>
+                        </div>
+
+                        <div style={styles.detailGrid}>
+                          <div><b>{text.batch}:</b> {booking.batchId}</div>
+                          <div><b>{text.labourCount}:</b> {booking.labourCount || "-"}</div>
+                          <div><b>{text.phone}:</b> {booking.phone}</div>
+                          <div><b>{text.landmark}:</b> {booking.address}</div>
+                        </div>
+
+                        <div style={styles.actionRow}>
+                          <a href={`tel:${booking.phone}`} style={styles.callButton}>
+                            {text.callFarmer}
+                          </a>
+
+                          {booking.mapLink ? (
+                            <a
+                              href={booking.mapLink}
+                              target="_blank"
+                              rel="noreferrer"
+                              style={styles.mapButton}
+                            >
+                              {text.openMap}
+                            </a>
+                          ) : (
+                            <span style={styles.noMapText}>{text.noLocation}</span>
+                          )}
+                        </div>
+
+                        <div style={styles.paymentRow}>
+                          <span style={styles.paymentLabel}>{text.paymentStatus}:</span>
+
+                          {booking.paymentStatus === "PAID" ? (
+                            <span style={styles.paidBadge}>{text.paidDone}</span>
+                          ) : (
+                            <button
+                              style={styles.paidButton}
+                              onClick={() => handleMarkPaid(booking.pk)}
+                            >
+                              {text.markPaid}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </>
+            )}
           </div>
         )}
 
@@ -659,6 +788,14 @@ const styles = {
   cardHeader: {
     marginBottom: "18px"
   },
+  cardHeaderRow: {
+    marginBottom: "18px",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: "12px",
+    flexWrap: "wrap"
+  },
   cardTitle: {
     margin: 0,
     fontSize: "24px",
@@ -704,6 +841,18 @@ const styles = {
     cursor: "pointer",
     fontWeight: "700",
     fontSize: "14px"
+  },
+  logoutButton: {
+    background: "#475569",
+    color: "#fff",
+    border: "none",
+    padding: "10px 14px",
+    borderRadius: "12px",
+    cursor: "pointer",
+    fontWeight: "700"
+  },
+  leaderLoginBox: {
+    maxWidth: "420px"
   },
   locationRow: {
     display: "flex",

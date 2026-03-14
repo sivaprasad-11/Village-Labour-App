@@ -16,9 +16,19 @@ app.use(express.json());
 const AWS_REGION = process.env.AWS_REGION || "ap-south-1";
 const BATCHES_TABLE = process.env.TABLE_BATCHES || "LabourBatches";
 const BOOKINGS_TABLE = process.env.TABLE_BOOKINGS || "Bookings";
+const LEADER_ACCESS_PIN = process.env.LEADER_ACCESS_PIN || "1234";
 
 const ddb = new DynamoDBClient({ region: AWS_REGION });
 const docClient = DynamoDBDocumentClient.from(ddb);
+
+function verifyLeaderAccess(req) {
+  const pin =
+    req.headers["x-leader-pin"] ||
+    req.body?.leaderPin ||
+    req.query?.leaderPin;
+
+  return pin === LEADER_ACCESS_PIN;
+}
 
 app.get("/api/health", (req, res) => {
   res.json({ status: "OK" });
@@ -38,6 +48,10 @@ app.get("/api/batches", async (req, res) => {
 
 app.get("/api/bookings", async (req, res) => {
   try {
+    if (!verifyLeaderAccess(req)) {
+      return res.status(401).json({ error: "Unauthorized leader access" });
+    }
+
     const { batchId, date } = req.query;
 
     const out = await docClient.send(
@@ -150,6 +164,10 @@ app.post("/api/book", async (req, res) => {
 
 app.post("/api/payment-paid", async (req, res) => {
   try {
+    if (!verifyLeaderAccess(req)) {
+      return res.status(401).json({ error: "Unauthorized leader access" });
+    }
+
     const { pk } = req.body;
 
     if (!pk) {
