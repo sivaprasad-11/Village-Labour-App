@@ -16,18 +16,25 @@ app.use(express.json());
 const AWS_REGION = process.env.AWS_REGION || "ap-south-1";
 const BATCHES_TABLE = process.env.TABLE_BATCHES || "LabourBatches";
 const BOOKINGS_TABLE = process.env.TABLE_BOOKINGS || "Bookings";
-const LEADER_ACCESS_PIN = process.env.LEADER_ACCESS_PIN || "1234";
 
 const ddb = new DynamoDBClient({ region: AWS_REGION });
 const docClient = DynamoDBDocumentClient.from(ddb);
 
-function verifyLeaderAccess(req) {
-  const pin =
-    req.headers["x-leader-pin"] ||
-    req.body?.leaderPin ||
-    req.query?.leaderPin;
+async function verifyLeaderAccess(batchId, leaderPin) {
+  if (!batchId || !leaderPin) {
+    return false;
+  }
 
-  return pin === LEADER_ACCESS_PIN;
+  const batchResult = await docClient.send(
+    new GetCommand({
+      TableName: BATCHES_TABLE,
+      Key: { batchId }
+    })
+  );
+
+  const storedPin = batchResult?.Item?.leaderPin;
+
+  return storedPin && storedPin === leaderPin;
 }
 
 app.get("/api/health", (req, res) => {
@@ -48,11 +55,17 @@ app.get("/api/batches", async (req, res) => {
 
 app.get("/api/bookings", async (req, res) => {
   try {
-    if (!verifyLeaderAccess(req)) {
-      return res.status(401).json({ error: "Unauthorized leader access" });
+    const { batchId, date, leaderPin } = req.query;
+
+    if (!batchId || !leaderPin) {
+      return res.status(400).json({ error: "batchId and leaderPin are required" });
     }
 
-    const { batchId, date } = req.query;
+    const isAllowed = await verifyLeaderAccess(batchId, leaderPin);
+
+    if (!isAllowed) {
+      return res.status(401).json({ error: "Unauthorized leader access" });
+    }
 
     const out = await docClient.send(
       new ScanCommand({ TableName: BOOKINGS_TABLE })
@@ -60,9 +73,7 @@ app.get("/api/bookings", async (req, res) => {
 
     let items = out.Items || [];
 
-    if (batchId) {
-      items = items.filter((item) => item.batchId === batchId);
-    }
+    items = items.filter((item) => item.batchId === batchId);
 
     if (date) {
       items = items.filter((item) => item.date === date);
@@ -164,14 +175,35 @@ app.post("/api/book", async (req, res) => {
 
 app.post("/api/payment-paid", async (req, res) => {
   try {
-    if (!verifyLeaderAccess(req)) {
-      return res.status(401).json({ error: "Unauthorized leader access" });
-    }
-
-    const { pk } = req.body;
+    const { pk, batchId, leaderPin } = req.body;
 
     if (!pk) {
       return res.status(400).json({ error: "pk is required" });
+    }
+
+    if (!batchId || !leaderPin) {
+      return res.status(400).json({ error: "batchId and leaderPin are required" });
+    }
+
+    const isAllowed = await verifyLeaderAccess(batchId, leaderPin);
+
+    if (!isAllowed) {
+      return res.status(401).json({ error: "Unauthorized leader access" });
+    }
+
+    const bookingResult = await docClient.send(
+      new GetCommand({
+        TableName: BOOKINGS_TABLE,
+        Key: { pk }
+      })
+    );
+
+    if (!bookingResult?.Item) {
+      return res.status(404).json({ error: "Booking not found" });
+    }
+
+    if (bookingResult.Item.batchId !== batchId) {
+      return res.status(403).json({ error: "You can update only your batch bookings" });
     }
 
     await docClient.send(

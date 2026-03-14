@@ -26,7 +26,6 @@ function App() {
   const [leaderMessage, setLeaderMessage] = useState("");
   const [leaderMessageType, setLeaderMessageType] = useState("");
 
-  const FRONTEND_LEADER_PIN = "1234";
 
   const t = {
     en: {
@@ -73,7 +72,7 @@ function App() {
       leaderDesc:
         "Check bookings, contact farmers, view location and update payment.",
       leaderAccessTitle: "Leader Access",
-      leaderAccessDesc: "Enter leader PIN to open dashboard",
+      leaderAccessDesc: "Select your batch and enter leader PIN to open dashboard",
       leaderPin: "Leader PIN",
       leaderPinPlaceholder: "Enter leader PIN",
       leaderLogin: "Login",
@@ -141,7 +140,7 @@ function App() {
       leaderDesc:
         "బుకింగ్స్ చూడండి, రైతులను సంప్రదించండి, లొకేషన్ చూడండి, చెల్లింపును అప్‌డేట్ చేయండి.",
       leaderAccessTitle: "లీడర్ యాక్సెస్",
-      leaderAccessDesc: "డాష్‌బోర్డ్ ఓపెన్ చేయడానికి లీడర్ PIN ఇవ్వండి",
+      leaderAccessDesc: "మీ బ్యాచ్ ఎంచుకుని లీడర్ PIN ఇచ్చి డాష్‌బోర్డ్ ఓపెన్ చేయండి",
       leaderPin: "లీడర్ PIN",
       leaderPinPlaceholder: "లీడర్ PIN నమోదు చేయండి",
       leaderLogin: "లాగిన్",
@@ -204,18 +203,28 @@ function App() {
     );
   };
 
-  const handleLeaderAccess = () => {
-    setLeaderMessage("");
-    setLeaderMessageType("");
+  const handleLeaderAccess = async () => {
+  setLeaderMessage("");
+  setLeaderMessageType("");
 
-    if (leaderPin === FRONTEND_LEADER_PIN) {
-      setLeaderAuthenticated(true);
-    } else {
-      setLeaderAuthenticated(false);
-      setLeaderMessage(text.invalidLeaderPin);
-      setLeaderMessageType("error");
-    }
-  };
+  if (!leaderBatchId || !leaderPin) {
+    setLeaderMessage("Please select batch and enter PIN");
+    setLeaderMessageType("error");
+    return;
+  }
+
+  const data = await getBookings(leaderBatchId, "", leaderPin);
+
+  if (data?.error) {
+    setLeaderAuthenticated(false);
+    setLeaderMessage(data.error);
+    setLeaderMessageType("error");
+    return;
+  }
+
+  setLeaderAuthenticated(true);
+  setLeaderBookings([]);
+};
 
   const handleLeaderLogout = () => {
     setLeaderAuthenticated(false);

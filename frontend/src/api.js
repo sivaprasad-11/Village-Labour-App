@@ -10,12 +10,9 @@ export async function getBookings(batchId, date, leaderPin) {
 
   if (batchId) params.append("batchId", batchId);
   if (date) params.append("date", date);
+  if (leaderPin) params.append("leaderPin", leaderPin);
 
-  const res = await fetch(`${API}/api/bookings?${params.toString()}`, {
-    headers: {
-      "x-leader-pin": leaderPin || ""
-    }
-  });
+  const res = await fetch(`${API}/api/bookings?${params.toString()}`);
 
   let json = {};
   try {
@@ -52,14 +49,13 @@ export async function bookBatch(data) {
   return json;
 }
 
-export async function markPaymentPaid(pk, leaderPin) {
+export async function markPaymentPaid(pk, batchId, leaderPin) {
   const res = await fetch(`${API}/api/payment-paid`, {
     method: "POST",
     headers: {
-      "Content-Type": "application/json",
-      "x-leader-pin": leaderPin || ""
+      "Content-Type": "application/json"
     },
-    body: JSON.stringify({ pk })
+    body: JSON.stringify({ pk, batchId, leaderPin })
   });
 
   let json = {};
