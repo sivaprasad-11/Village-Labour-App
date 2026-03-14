@@ -26,7 +26,6 @@ function App() {
   const [leaderMessage, setLeaderMessage] = useState("");
   const [leaderMessageType, setLeaderMessageType] = useState("");
 
-
   const t = {
     en: {
       title: "Paramatapalli Village Labour Booking App",
@@ -79,13 +78,14 @@ function App() {
       leaderLogout: "Logout",
       invalidLeaderPin: "Invalid leader PIN",
       unauthorizedLeader: "Unauthorized leader access",
+      selectBatchAndPin: "Please select batch and enter PIN",
       showBookings: "Show Bookings",
       totalBookings: "Total Bookings",
       labourNeeded: "Labour Needed",
       paid: "Paid",
       pending: "Pending",
       noBookings:
-        "No bookings found. Select batch and date to view details.",
+        "No bookings found. Select date to view details.",
       callFarmer: "Call Farmer",
       openMap: "Open Map",
       noLocation: "Location not provided",
@@ -147,13 +147,14 @@ function App() {
       leaderLogout: "లాగౌట్",
       invalidLeaderPin: "తప్పు లీడర్ PIN",
       unauthorizedLeader: "అనుమతి లేని లీడర్ యాక్సెస్",
+      selectBatchAndPin: "దయచేసి బ్యాచ్ ఎంచుకుని PIN నమోదు చేయండి",
       showBookings: "బుకింగ్స్ చూపించు",
       totalBookings: "మొత్తం బుకింగ్స్",
       labourNeeded: "అవసరమైన కూలీలు",
       paid: "చెల్లించినవి",
       pending: "పెండింగ్",
       noBookings:
-        "బుకింగ్స్ లేవు. బ్యాచ్ మరియు తేదీ ఎంచుకుని వివరాలు చూడండి.",
+        "బుకింగ్స్ లేవు. తేదీ ఎంచుకుని వివరాలు చూడండి.",
       callFarmer: "రైతుకు కాల్ చేయండి",
       openMap: "మ్యాప్ ఓపెన్ చేయండి",
       noLocation: "లొకేషన్ ఇవ్వలేదు",
@@ -204,27 +205,32 @@ function App() {
   };
 
   const handleLeaderAccess = async () => {
-  setLeaderMessage("");
-  setLeaderMessageType("");
+    setLeaderMessage("");
+    setLeaderMessageType("");
 
-  if (!leaderBatchId || !leaderPin) {
-    setLeaderMessage("Please select batch and enter PIN");
-    setLeaderMessageType("error");
-    return;
-  }
+    if (!leaderBatchId || !leaderPin) {
+      setLeaderMessage(text.selectBatchAndPin);
+      setLeaderMessageType("error");
+      return;
+    }
 
-  const data = await getBookings(leaderBatchId, "", leaderPin);
+    const data = await getBookings(leaderBatchId, "", leaderPin);
 
-  if (data?.error) {
-    setLeaderAuthenticated(false);
-    setLeaderMessage(data.error);
-    setLeaderMessageType("error");
-    return;
-  }
+    if (data?.error) {
+      setLeaderAuthenticated(false);
+      setLeaderMessage(
+        data.error === "Unauthorized leader access"
+          ? text.unauthorizedLeader
+          : data.error
+      );
+      setLeaderMessageType("error");
+      return;
+    }
 
-  setLeaderAuthenticated(true);
-  setLeaderBookings([]);
-};
+    setLeaderAuthenticated(true);
+    setLeaderBookings([]);
+    setLeaderDate("");
+  };
 
   const handleLeaderLogout = () => {
     setLeaderAuthenticated(false);
@@ -308,7 +314,7 @@ function App() {
   };
 
   const handleMarkPaid = async (pk) => {
-    const res = await markPaymentPaid(pk, leaderPin);
+    const res = await markPaymentPaid(pk, leaderBatchId, leaderPin);
 
     if (res?.error) {
       alert(
@@ -544,6 +550,22 @@ function App() {
 
                 <div style={styles.leaderLoginBox}>
                   <div style={styles.field}>
+                    <label style={styles.label}>{text.selectBatch}</label>
+                    <select
+                      style={styles.input}
+                      value={leaderBatchId}
+                      onChange={(e) => setLeaderBatchId(e.target.value)}
+                    >
+                      <option value="">{text.selectBatch}</option>
+                      {batches.map((b) => (
+                        <option key={b.batchId} value={b.batchId}>
+                          {b.batchId} - {b.leaderName}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div style={styles.field}>
                     <label style={styles.label}>{text.leaderPin}</label>
                     <input
                       style={styles.input}
@@ -585,18 +607,11 @@ function App() {
                 <div style={styles.grid}>
                   <div style={styles.field}>
                     <label style={styles.label}>{text.selectBatch}</label>
-                    <select
+                    <input
                       style={styles.input}
                       value={leaderBatchId}
-                      onChange={(e) => setLeaderBatchId(e.target.value)}
-                    >
-                      <option value="">{text.selectBatch}</option>
-                      {batches.map((b) => (
-                        <option key={b.batchId} value={b.batchId}>
-                          {b.batchId} - {b.leaderName}
-                        </option>
-                      ))}
-                    </select>
+                      readOnly
+                    />
                   </div>
 
                   <div style={styles.field}>
